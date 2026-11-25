@@ -8,7 +8,7 @@ A read-only web dashboard for the Pivot Path team covering industry trends, comp
 | --- | --- |
 | `index.html` | The page: AI, Products, Services and 483s tabs, tracked websites, signal rubric |
 | `assets/` | Styles, script and the Pivot Path logo |
-| `data/*.json` | The data, rewritten every Monday by Claude's weekly refresh |
+| `data/*.json` | The data, updated every weekday by Claude's refresh |
 | `.nojekyll` | Tells GitHub Pages to serve the files as they are |
 
 ## Turning on GitHub Pages (one time)
@@ -19,7 +19,12 @@ A read-only web dashboard for the Pivot Path team covering industry trends, comp
 
 ## How the data stays current
 
-Every Monday morning (India time), Claude researches the week's news, competitor moves, new 483s and warning letters, and the tracked websites. It then commits fresh `data/*.json` files to `main`, and GitHub Pages republishes automatically within a few minutes.
+Claude refreshes the data at 6:37 am India time every weekday:
+
+- **Monday (full refresh):** a complete sweep of news, every competitor, the latest 100 Form 483s with synopses, recent warning letters and the tracked websites.
+- **Tuesday to Friday (light refresh):** only what is new since the last run (news, new 483s and warning letters, tracked websites). Existing items are left as they are.
+
+Each run commits fresh `data/*.json` files to `main`, and GitHub Pages republishes automatically within a few minutes.
 
 ## Features
 
@@ -30,4 +35,4 @@ Every Monday morning (India time), Claude researches the week's news, competitor
 ## Notes
 
 - The repo is public, so the data files can be seen by anyone who finds them. Search engines are asked not to index the page.
-- To suggest a website for the weekly checks, contact the marketing team.
+- To suggest a website for the daily checks, contact the marketing team.
