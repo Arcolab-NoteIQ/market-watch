@@ -1,41 +1,33 @@
 # Pivot Path Market & Competitor Watch
 
-A standalone web app for the Pivot Path team: industry trends, competitor moves, pharma AI news, FDA Form 483s and warning letters, with team flags and comments. Nobody needs a Claude account to use it.
+A read-only web dashboard for the Pivot Path team covering industry trends, competitor moves, pharma AI news, FDA Form 483s and warning letters. It is hosted on GitHub Pages, and nobody needs a Claude account to use it.
 
-## What is in this folder
+## What's in the repo
 
 | Path | What it is |
-|---|---|
-| `index.html`, `assets/` | The app (plain HTML, CSS and JavaScript, no build step) |
-| `data/*.json` | The research data the app shows. Replaced every Monday by Claude's scheduled refresh |
-| `netlify/functions/notes.mjs` | Small serverless function that stores team flags and comments (Netlify Blobs, no database to manage) |
-| `netlify.toml`, `package.json` | Netlify settings and the one dependency |
+| --- | --- |
+| `index.html` | The page: AI, Products, Services and 483s tabs, tracked websites, signal rubric |
+| `assets/` | Styles, script and the Pivot Path logo |
+| `data/*.json` | The data, rewritten every Monday by Claude's weekly refresh |
+| `.nojekyll` | Tells GitHub Pages to serve the files as they are |
 
-## One-time setup (about 10 minutes)
+## Turning on GitHub Pages (one time)
 
-1. **Create a GitHub repository** (private is fine), e.g. `pivotpath/market-watch`, and upload the contents of this folder to it. Do not upload `node_modules`.
-2. **Create a free Netlify account** at netlify.com (sign in with GitHub is easiest).
-3. In Netlify: **Add new site, Import an existing project, GitHub**, pick the repository, leave the build settings as detected (publish directory `.`, functions `netlify/functions`) and deploy.
-4. Netlify gives you a link such as `https://pivotpath-market-watch.netlify.app`. You can rename it under **Site configuration, Change site name**, or attach a company subdomain under **Domain management**.
-5. Share the link with the team. Anyone with the link can open it, flag items and comment. Search engines are told not to index it.
+1. In this repo, open **Settings → Pages**.
+2. Under **Build and deployment**, set Source to **Deploy from a branch**, Branch to **main**, folder **/ (root)**, then click **Save**.
+3. After a minute or two the page shows the site address, usually `https://arcolab-noteiq.github.io/market-watch/`. Share that link with the team.
 
-## Keeping the data fresh
+## How the data stays current
 
-Claude's Monday scheduled task researches as before and commits new versions of `data/news.json`, `data/fda.json`, `data/competitors.json`, `data/run.json` and `data/sites.json` to the repository. Netlify redeploys automatically within a minute or two of each commit. For this, Claude needs push access to the repository: connect GitHub in Claude's settings and give the Claude GitHub App access to this repository.
+Every Monday morning (India time), Claude researches the week's news, competitor moves, new 483s and warning letters, and the tracked websites. It then commits fresh `data/*.json` files to `main`, and GitHub Pages republishes automatically within a few minutes.
 
-To update data by hand, edit or replace the JSON files in GitHub; the field names must stay the same.
+## Features
 
-## Team features
-
-- **Flag** marks an item for the team; it then appears in the **Flagged** tab with who flagged it.
-- **Comments** open a thread under any news item, competitor row or 483.
-- People enter their name once; it is remembered in their browser. Only the browser that posted a flag or comment can remove it.
-- **Suggest a website** (bottom of the page) collects sites for the marketing team to add to the weekly checks.
-- **Download CSV** exports the filtered list; **Print / Save PDF** prints every tab, one per page.
-
-Flags and comments live in Netlify Blobs on your Netlify site, not in GitHub. To clear them all, delete the `team-notes` store in Netlify under **Blobs**.
+- Filter by product, service, type and signal; search the 483 list by company or FEI.
+- **Download CSV** on every feed and table.
+- **Print / Save PDF** prints every tab, one section per page.
 
 ## Notes
 
-- Content is written by Claude from public sources; open the source link before using a figure in client material.
-- Form 483 synopses come from company stock-exchange disclosures and trade press, not from FDA's text.
+- The repo is public, so the data files can be seen by anyone who finds them. Search engines are asked not to index the page.
+- To suggest a website for the weekly checks, contact the marketing team.

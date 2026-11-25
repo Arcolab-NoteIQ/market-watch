@@ -32,7 +32,7 @@
     <div class="tile"><p class="tile-label">Items tracked</p><p class="tile-num" id="k-items">&nbsp;</p></div>
     <div class="tile"><p class="tile-label">High-signal items</p><p class="tile-num" id="k-high">&nbsp;</p></div>
     <div class="tile"><p class="tile-label">Form 483s listed</p><p class="tile-num" id="k-483">&nbsp;</p></div>
-    <div class="tile"><p class="tile-label">Team flags</p><p class="tile-num" id="k-flags">&nbsp;</p></div>
+    <div class="tile"><p class="tile-label">Warning letters listed</p><p class="tile-num" id="k-wl">&nbsp;</p></div>
   </section>
 
   <nav class="tabbar" role="tablist" aria-label="Sections">
@@ -40,7 +40,6 @@
     <button type="button" class="tab" role="tab" data-tab="products" aria-selected="false" tabindex="-1">Products</button>
     <button type="button" class="tab" role="tab" data-tab="services" aria-selected="false" tabindex="-1">Services</button>
     <button type="button" class="tab" role="tab" data-tab="fda483" aria-selected="false" tabindex="-1">483s</button>
-    <button type="button" class="tab" role="tab" data-tab="flagged" aria-selected="false" tabindex="-1">Flagged <span class="tab-count" id="flag-count"></span></button>
   </nav>
 
   <section class="panel" id="ai" role="tabpanel">
@@ -94,17 +93,10 @@
     <div class="feed" data-feed="reg"></div>
   </section>
 
-  <section class="panel" id="flagged" role="tabpanel" hidden>
-    <h2 class="split-heading small">Flagged by<br><span class="grad">the team</span></h2>
-    <p class="sub">Everything a colleague has flagged or commented on, most recent activity first.</p>
-    <div class="feed" id="flagged-feed"></div>
-  </section>
-
   <section class="block" id="sites">
     <h2 class="split-heading small">Tracked<br><span class="grad">websites</span></h2>
-    <p class="sub">Sites the weekly refresh checks, on top of its general research. Suggest a new one below and the marketing team will add it.</p>
+    <p class="sub">Sites the weekly refresh checks, on top of its general research. To suggest a new one, contact the marketing team.</p>
     <div class="table-wrap"><table class="table" id="sites-table"></table></div>
-    <div class="thread" id="site-suggestions"></div>
   </section>
 
   <details class="block rubric">
@@ -122,7 +114,6 @@
   <div class="wrap">Pivot Path Market &amp; Competitor Watch. Internal use. Life. Science. Possibilities.</div>
 </footer>
 
-<div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
 <script src="assets/app.js"></script>
 </body>
 </html>

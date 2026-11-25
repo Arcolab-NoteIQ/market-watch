@@ -1,4 +1,4 @@
-/* Pivot Path Market & Competitor Watch: static app, data in /data, team notes via /api/notes */
+/* Pivot Path Market & Competitor Watch: static app, data in /data, read-only, hosted on GitHub Pages */
 (() => {
   'use strict';
 
@@ -8,12 +8,11 @@
     ai: ['Pharma AI'],
     reg: ['Regulatory']
   };
-  const TABS = ['ai', 'products', 'services', 'fda483', 'flagged'];
-  const API = '/api/notes';
+  const TABS = ['ai', 'products', 'services', 'fda483'];
 
   const state = {
     news: [], fda: [], comp: [], sites: [], run: {},
-    notes: [], notesOn: false,
+    
     f: { ai: {}, products: {}, services: {}, fda: {} },
     open: new Set()
   };
@@ -55,15 +54,6 @@
   const keyFda = (r) => 'f-' + hash(r.url || [r.company, r.event_date].join('|'));
   const keyComp = (r) => 'c-' + hash([r.area, r.competitor].join('|'));
   const country = (l) => (/, US$/.test(l || '') ? 'United States' : String(l || '').split(', ').pop());
-  function toast(msg) {
-    const t = document.getElementById('toast');
-    t.textContent = msg; t.hidden = false;
-    clearTimeout(toast.t); toast.t = setTimeout(() => { t.hidden = true; }, 3200);
-  }
-  const ls = {
-    get(k, d) { try { const v = localStorage.getItem(k); return v === null ? d : JSON.parse(v); } catch { return d; } },
-    set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch { /* ignore */ } }
-  };
 
   /* ---------- data ---------- */
   async function getJSON(path) {
@@ -77,89 +67,6 @@
       getJSON('data/run.json').catch(() => [{}]), getJSON('data/sites.json').catch(() => [])
     ]);
     state.news = news; state.fda = fda; state.comp = comp; state.run = run[0] || {}; state.sites = sites;
-  }
-
-  /* ---------- team notes ---------- */
-  async function loadNotes() {
-    try {
-      const r = await fetch(API, { cache: 'no-store' });
-      if (!r.ok) throw new Error(String(r.status));
-      const j = await r.json();
-      state.notes = Array.isArray(j.notes) ? j.notes : [];
-      state.notesOn = true;
-    } catch {
-      state.notes = []; state.notesOn = false;
-    }
-  }
-  const notesFor = (key) => state.notes.filter((n) => n.item === key);
-  const myTokens = () => ls.get('pp-note-tokens', {});
-  function myName(ask) {
-    let n = ls.get('pp-name', '');
-    if (!n && ask) {
-      n = (window.prompt('Your name (shown next to your flags and comments):') || '').trim().slice(0, 40);
-      if (n) ls.set('pp-name', n);
-    }
-    return n;
-  }
-  async function postNote(item, kind, text) {
-    const name = myName(true);
-    if (!name) return false;
-    try {
-      const r = await fetch(API, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ item, kind, name, text: text || '' }) });
-      const j = await r.json().catch(() => ({}));
-      if (!r.ok) throw new Error(j.error || String(r.status));
-      const t = myTokens(); t[j.note.id] = j.token; ls.set('pp-note-tokens', t);
-      state.notes.push(j.note);
-      return true;
-    } catch (e) { toast('Could not save: ' + e.message); return false; }
-  }
-  async function deleteNote(id) {
-    const token = myTokens()[id];
-    if (!token) return;
-    try {
-      const r = await fetch(API, { method: 'DELETE', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ id, token }) });
-      if (!r.ok) throw new Error(String(r.status));
-      state.notes = state.notes.filter((n) => n.id !== id);
-      const t = myTokens(); delete t[id]; ls.set('pp-note-tokens', t);
-    } catch (e) { toast('Could not remove: ' + e.message); }
-  }
-
-  function teamBar(key) {
-    if (!state.notesOn) return null;
-    const ns = notesFor(key);
-    const flags = ns.filter((n) => n.kind === 'flag');
-    const comments = ns.filter((n) => n.kind === 'comment');
-    const me = ls.get('pp-name', '');
-    const mine = flags.find((n) => myTokens()[n.id]);
-    const flagBtn = h('button', { type: 'button', class: 'act' + (mine ? ' on' : ''), 'aria-pressed': mine ? 'true' : 'false',
-      onclick: async () => { if (mine) await deleteNote(mine.id); else await postNote(key, 'flag', ''); renderAll(); } },
-      mine ? 'Flagged' : 'Flag');
-    const who = flags.length ? h('span', { class: 'who' }, 'Flagged by ' + flags.map((n) => n.name).join(', ')) : null;
-    const open = state.open.has(key);
-    const cBtn = h('button', { type: 'button', class: 'act', 'aria-expanded': open ? 'true' : 'false',
-      onclick: () => { if (open) state.open.delete(key); else state.open.add(key); renderAll(); } },
-      `Comments (${comments.length})`);
-    const bar = h('div', { class: 'actions' }, flagBtn, cBtn, who);
-    const frag = document.createDocumentFragment();
-    frag.append(bar);
-    if (open) frag.append(thread(key, comments, me));
-    return frag;
-  }
-  function thread(key, comments, me) {
-    const list = comments.sort((a, b) => a.at.localeCompare(b.at)).map((n) =>
-      h('p', { class: 'note-row' }, h('span', { class: 'by' }, n.name), h('span', { class: 'when' }, fmtWhen(n.at)), h('br'), n.text,
-        myTokens()[n.id] ? h('button', { type: 'button', class: 'act del', onclick: async () => { await deleteNote(n.id); renderAll(); } }, 'Delete') : null));
-    const nameIn = h('input', { type: 'text', maxlength: '40', placeholder: 'Your name', value: me || '', 'aria-label': 'Your name' });
-    const textIn = h('textarea', { maxlength: '500', rows: '1', placeholder: 'Add a comment, e.g. relevant for the eBrain pitch', 'aria-label': 'Comment' });
-    const send = h('button', { type: 'submit', class: 'btn-fill' }, 'Post');
-    const form = h('form', { class: 'note-form', onsubmit: async (e) => {
-      e.preventDefault();
-      const nm = nameIn.value.trim().slice(0, 40); const tx = textIn.value.trim();
-      if (!nm || !tx) { toast('Add your name and a comment.'); return; }
-      ls.set('pp-name', nm); send.disabled = true;
-      if (await postNote(key, 'comment', tx)) renderAll(); else send.disabled = false;
-    } }, nameIn, textIn, send);
-    return h('div', { class: 'thread' }, list.length ? list : h('p', { class: 'muted note-row' }, 'No comments yet.'), form);
   }
 
   /* ---------- filters ---------- */
@@ -194,13 +101,11 @@
   /* ---------- news ---------- */
   function newsItem(r) {
     const key = keyNews(r);
-    const flagged = notesFor(key).some((n) => n.kind === 'flag');
-    return h('article', { class: 'item' + (flagged ? ' is-flagged' : ''), id: key },
+    return h('article', { class: 'item', id: key },
       h('div', { class: 'item-meta' }, h('span', { class: 'nowrap' }, fmtDate(r.date)), h('span', { class: 'pill' }, r.area), h('span', null, r.type), h('span', { class: 'pill sig-' + r.signal }, r.signal)),
       h('h4', null, link(r.url, r.headline)),
       h('p', { class: 'why' }, h('b', null, 'Why it matters: '), r.why_it_matters),
-      h('div', { class: 'src' }, r.company, ' · ', r.source),
-      teamBar(key));
+      h('div', { class: 'src' }, r.company, ' · ', r.source));
   }
   function filteredNews(sc) {
     const f = state.f[sc] || {}; const areas = SCOPES[sc];
@@ -243,7 +148,7 @@
       const key = keyComp(r);
       body.append(h('tr', { id: key },
         h('td', null, r.area), h('td', { class: r.group ? 'indent' : null }, r.competitor), h('td', null, r.offering),
-        h('td', null, link(r.url, r.latest_move), teamBar(key)), h('td', { class: 'nowrap' }, fmtDate(r.move_date)), h('td', null, r.overlap)));
+        h('td', null, link(r.url, r.latest_move)), h('td', { class: 'nowrap' }, fmtDate(r.move_date)), h('td', null, r.overlap)));
     });
     if (!rows.length) body.append(h('tr', null, h('td', { colspan: '6', class: 'muted' }, 'No competitors tracked for this selection yet.')));
     t.replaceChildren(head, body);
@@ -269,31 +174,10 @@
       return h('tr', { id: key },
         h('td', { class: 'nowrap' }, r.doc_type), h('td', null, link(r.url, r.company)), h('td', null, r.location),
         h('td', { class: 'nowrap' }, fmtDate(r.event_date)), h('td', { class: 'nowrap' }, r.fei || ''), h('td', null, r.source || ''),
-        h('td', { class: 'syn' }, syn, teamBar(key)));
+        h('td', { class: 'syn' }, syn));
     }));
     if (!rows.length) body.append(h('tr', null, h('td', { colspan: '7', class: 'muted' }, 'Nothing matches these filters.')));
     t.replaceChildren(head, body);
-  }
-
-  /* ---------- flagged ---------- */
-  function renderFlagged() {
-    const byItem = new Map();
-    state.notes.forEach((n) => { const p = byItem.get(n.item); if (!p || n.at > p) byItem.set(n.item, n.at); });
-    const flagsN = state.notes.filter((n) => n.kind === 'flag').length;
-    document.getElementById('flag-count').textContent = state.notesOn && byItem.size ? String(byItem.size) : '';
-    document.getElementById('k-flags').textContent = state.notesOn ? String(flagsN) : 'Off';
-    const el = document.getElementById('flagged-feed');
-    if (!state.notesOn) { el.replaceChildren(h('p', { class: 'empty' }, 'Team flags and comments are not available in this copy of the app (the notes service is not running).')); return; }
-    const out = [];
-    [...byItem.entries()].sort((a, b) => b[1].localeCompare(a[1])).forEach(([key]) => {
-      const n = state.news.find((r) => keyNews(r) === key);
-      if (n) { out.push(newsItem(n)); return; }
-      const f = state.fda.find((r) => keyFda(r) === key);
-      if (f) { out.push(h('article', { class: 'item is-flagged' }, h('div', { class: 'item-meta' }, h('span', { class: 'pill' }, f.doc_type), fmtDate(f.event_date), f.location), h('h4', null, link(f.url, f.company)), f.synopsis ? h('p', { class: 'why' }, f.synopsis) : null, teamBar(key))); return; }
-      const c = state.comp.find((r) => keyComp(r) === key);
-      if (c) { out.push(h('article', { class: 'item is-flagged' }, h('div', { class: 'item-meta' }, h('span', { class: 'pill' }, c.area), 'Competitor watchlist'), h('h4', null, c.competitor), h('p', { class: 'why' }, link(c.url, c.latest_move), ' (', fmtDate(c.move_date), ')'), teamBar(key))); }
-    });
-    el.replaceChildren(...(out.length ? out : [h('p', { class: 'empty' }, 'Nothing flagged yet. Use Flag or Comments on any item to share it with the team.')]));
   }
 
   /* ---------- sites ---------- */
@@ -303,11 +187,6 @@
     const body = h('tbody', null, state.sites.map((r) => h('tr', null, h('td', null, link(r.url, r.label || r.url)), h('td', null, r.area || 'General'), h('td', null, r.notes || ''), h('td', { class: 'nowrap' }, r.last_checked ? fmtDate(r.last_checked) : 'Not yet'), h('td', null, r.last_finding || ''))));
     if (!state.sites.length) body.append(h('tr', null, h('td', { colspan: '5', class: 'muted' }, 'No websites tracked yet.')));
     t.replaceChildren(head, body);
-    const box = document.getElementById('site-suggestions');
-    if (!state.notesOn) { box.replaceChildren(); return; }
-    const key = 'site-suggestions';
-    const cs = notesFor(key).filter((n) => n.kind === 'comment');
-    box.replaceChildren(h('h3', null, 'Suggest a website to track'), h('p', { class: 'sub' }, 'Paste the address and say what to watch for, e.g. "https://example.com/news, new product launches".'), thread(key, cs, ls.get('pp-name', '')));
   }
 
   /* ---------- header ---------- */
@@ -374,18 +253,18 @@
     renderHeader(); renderFilters();
     ['ai', 'products', 'services', 'reg'].forEach(renderFeed);
     ['products', 'services'].forEach((sc) => { renderBars(sc); renderComp(sc); });
-    renderFda(); renderSites(); renderFlagged();
+    renderFda(); renderSites();
+    document.getElementById('k-wl').textContent = String(state.fda.filter((r) => r.doc_type === 'Warning letter').length);
   }
 
   (async () => {
     showTab(current, false);
     try {
-      await Promise.all([loadData(), loadNotes()]);
+      await loadData();
       renderAll();
     } catch (e) {
       document.getElementById('lede').textContent = 'The data could not be loaded. Please refresh the page; if this persists, tell the marketing team.';
       console.error(e);
     }
-    setInterval(async () => { if (document.visibilityState === 'visible' && !document.querySelector('.note-form textarea:focus, .note-form input:focus')) { await loadNotes(); renderAll(); } }, 60000);
   })();
 })();

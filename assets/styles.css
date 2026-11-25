@@ -57,8 +57,6 @@ h3 { font-family: var(--font-bold); font-weight: 700; font-size: 18px; margin: 0
 .tab { background: none; border: 0; border-bottom: 3px solid transparent; margin-bottom: -1px; padding: 12px 18px; font-family: var(--font-bold); font-weight: 700; font-size: 15px; text-transform: uppercase; letter-spacing: 0.03em; color: var(--muted); cursor: pointer; white-space: nowrap; }
 .tab:hover { color: var(--ink); }
 .tab[aria-selected="true"] { color: var(--ink); border-image: var(--grad) 1; border-bottom-width: 3px; border-bottom-style: solid; }
-.tab-count { display: inline-block; min-width: 20px; padding: 0 6px; border-radius: 10px; background: var(--olive); color: #fff; font-size: 12px; line-height: 20px; text-align: center; }
-.tab-count:empty { display: none; }
 .panel { padding: 28px 0 8px; }
 .panel[hidden] { display: none; }
 .block { padding: 40px 0 8px; border-top: 1px solid var(--line); margin-top: 40px; }
@@ -79,7 +77,6 @@ h3 { font-family: var(--font-bold); font-weight: 700; font-size: 18px; margin: 0
 /* Feed */
 .feed { display: flex; flex-direction: column; gap: 12px; }
 .item { background: #fff; border: 1px solid var(--line); padding: 16px 18px; }
-.item.is-flagged { border-left: 4px solid var(--olive); }
 .item-meta { display: flex; flex-wrap: wrap; gap: 6px 10px; align-items: center; font-size: 13px; color: var(--muted); }
 .pill { border: 1px solid #cfcfc6; border-radius: 999px; padding: 1px 9px; color: var(--ink); font-size: 12px; }
 .sig-High { color: var(--red); border-color: var(--red); }
@@ -93,20 +90,6 @@ h3 { font-family: var(--font-bold); font-weight: 700; font-size: 18px; margin: 0
 .empty { color: var(--muted); padding: 16px; background: #fff; border: 1px dashed var(--line); }
 
 /* Team actions */
-.actions { display: flex; gap: 14px; align-items: center; margin-top: 10px; font-size: 13px; flex-wrap: wrap; }
-.act { background: none; border: 0; padding: 0; color: var(--dark-teal); cursor: pointer; font-size: 13px; text-decoration: underline; }
-.act.on { color: var(--olive); font-weight: 700; text-decoration: none; }
-.who { color: var(--muted); font-size: 12px; }
-.thread { margin-top: 10px; border-top: 1px solid var(--line); padding-top: 10px; }
-.thread[hidden] { display: none; }
-.note-row { font-size: 14px; margin: 0 0 8px; }
-.note-row .by { font-weight: 600; }
-.note-row .when { color: var(--muted); font-size: 12px; margin-left: 6px; }
-.note-row .del { margin-left: 8px; font-size: 12px; }
-.note-form { display: grid; grid-template-columns: 160px 1fr auto; gap: 8px; margin-top: 8px; }
-.note-form input, .note-form textarea { font: inherit; font-size: 14px; border: 1px solid #cfcfc6; padding: 6px 8px; border-radius: 0; min-width: 0; }
-.note-form textarea { resize: vertical; min-height: 36px; }
-@media (max-width: 640px) { .note-form { grid-template-columns: 1fr; } }
 
 /* Tables */
 .table-wrap { overflow-x: auto; background: #fff; border: 1px solid var(--line); }
@@ -119,7 +102,6 @@ h3 { font-family: var(--font-bold); font-weight: 700; font-size: 18px; margin: 0
 .table td.syn { min-width: 300px; max-width: 460px; font-size: 13px; }
 .nowrap { white-space: nowrap; font-variant-numeric: tabular-nums; }
 .muted { color: var(--muted); }
-.table .actions { margin-top: 4px; }
 
 /* Bars */
 .bars { display: flex; flex-direction: column; gap: 8px; }
@@ -134,10 +116,9 @@ h3 { font-family: var(--font-bold); font-weight: 700; font-size: 18px; margin: 0
 .rubric p { color: var(--muted); font-size: 14px; }
 
 .footer { margin-top: 48px; background: #000; color: #cdcdcd; font-size: 13px; padding: 18px 0; }
-.toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: var(--ink); color: #fff; padding: 10px 16px; font-size: 14px; z-index: 50; }
 
 @media print {
-  .topbar, .tabbar, .actions, .thread, .btn-link, .filters, .toast, #flagged, #site-suggestions { display: none !important; }
+  .topbar, .tabbar, .btn-link, .filters { display: none !important; }
   .panel[hidden] { display: block !important; }
   .panel { break-before: page; }
   body { background: #fff; }
