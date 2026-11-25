@@ -1,0 +1,10 @@
+{
+  "name": "pivotpath-market-watch",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Pivot Path Market & Competitor Watch: static app with team notes on Netlify",
+  "type": "module",
+  "dependencies": {
+    "@netlify/blobs": "^8.1.0"
+  }
+}

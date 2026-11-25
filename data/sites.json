@@ -1,0 +1,12 @@
+[
+ {
+  "id": "graph-safety",
+  "url": "https://graphsafety.ai/",
+  "label": "Graph Safety",
+  "area": "NovaVigil",
+  "notes": "Product modules, launches, funding, customers",
+  "added_at": "2026-11-25",
+  "last_checked": "2026-11-25",
+  "last_finding": "Intake, case processing and E2B(R3) reporting modules live; signal detection planned for Q1 2027."
+ }
+]

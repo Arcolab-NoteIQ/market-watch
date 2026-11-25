@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Market &amp; Competitor Watch | Pivot Path</title>
+<meta name="robots" content="noindex, nofollow">
+<link rel="icon" href="assets/logos/PivotPathLogo.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/styles.css">
+</head>
+<body>
+<header class="topbar">
+  <div class="wrap topbar-inner">
+    <img src="assets/logos/PivotPathLogo.svg" alt="Pivot Path" class="logo" width="180" height="37">
+    <div class="topbar-actions">
+      <button type="button" class="btn-outline" id="print-btn">Print / Save PDF</button>
+    </div>
+  </div>
+</header>
+
+<main class="wrap">
+  <section class="hero">
+    <h1 class="split-heading">Market &amp; competitor<br><span class="grad">watch</span></h1>
+    <p class="lede" id="lede">Loading the latest research...</p>
+    <p class="meta" id="meta"></p>
+  </section>
+
+  <section class="tiles" aria-label="Headline numbers">
+    <div class="tile"><p class="tile-label">Items tracked</p><p class="tile-num" id="k-items">&nbsp;</p></div>
+    <div class="tile"><p class="tile-label">High-signal items</p><p class="tile-num" id="k-high">&nbsp;</p></div>
+    <div class="tile"><p class="tile-label">Form 483s listed</p><p class="tile-num" id="k-483">&nbsp;</p></div>
+    <div class="tile"><p class="tile-label">Team flags</p><p class="tile-num" id="k-flags">&nbsp;</p></div>
+  </section>
+
+  <nav class="tabbar" role="tablist" aria-label="Sections">
+    <button type="button" class="tab" role="tab" data-tab="ai" aria-selected="true">AI</button>
+    <button type="button" class="tab" role="tab" data-tab="products" aria-selected="false" tabindex="-1">Products</button>
+    <button type="button" class="tab" role="tab" data-tab="services" aria-selected="false" tabindex="-1">Services</button>
+    <button type="button" class="tab" role="tab" data-tab="fda483" aria-selected="false" tabindex="-1">483s</button>
+    <button type="button" class="tab" role="tab" data-tab="flagged" aria-selected="false" tabindex="-1">Flagged <span class="tab-count" id="flag-count"></span></button>
+  </nav>
+
+  <section class="panel" id="ai" role="tabpanel">
+    <h2 class="split-heading small">Pharma AI<br><span class="grad">news</span></h2>
+    <p class="sub">Deals, launches and regulator signals on AI in pharma, newest first.</p>
+    <div class="filters" data-scope="ai"></div>
+    <div class="feed" data-feed="ai"></div>
+  </section>
+
+  <section class="panel" id="products" role="tabpanel" hidden>
+    <h2 class="split-heading small">Products: trends and<br><span class="grad">competitor moves</span></h2>
+    <p class="sub">NoteIQ, AnomIQ, InvestigationIQ, GoLanzar, Pivot-MES and NovaVigil. Each item says why it matters for Pivot Path.</p>
+    <div class="filters" data-scope="products"></div>
+    <div class="two-col">
+      <div class="feed" data-feed="products"></div>
+      <aside class="card"><h3>Items by product</h3><div class="bars" data-bars="products"></div></aside>
+    </div>
+    <div class="section-head">
+      <h3>Product competitor watchlist</h3>
+      <button type="button" class="btn-link" data-csv="comp-products">Download CSV</button>
+    </div>
+    <div class="table-wrap"><table class="table" data-comp="products"></table></div>
+  </section>
+
+  <section class="panel" id="services" role="tabpanel" hidden>
+    <h2 class="split-heading small">Services: trends and<br><span class="grad">competitor moves</span></h2>
+    <p class="sub">Pharmacovigilance, CSV, clinical data management, clinical operations and digital transformation.</p>
+    <div class="filters" data-scope="services"></div>
+    <div class="two-col">
+      <div class="feed" data-feed="services"></div>
+      <aside class="card"><h3>Items by service</h3><div class="bars" data-bars="services"></div></aside>
+    </div>
+    <div class="section-head">
+      <h3>Service competitor watchlist</h3>
+      <button type="button" class="btn-link" data-csv="comp-services">Download CSV</button>
+    </div>
+    <div class="table-wrap"><table class="table" data-comp="services"></table></div>
+  </section>
+
+  <section class="panel" id="fda483" role="tabpanel" hidden>
+    <h2 class="split-heading small">FDA Form 483s and<br><span class="grad">warning letters</span></h2>
+    <p class="sub">The latest Form 483s listed on FDA483s.com (Redica), FDA's own Reading Room postings and recent CDER warning letters. Newest inspection first.</p>
+    <div class="filters" data-scope="fda"></div>
+    <div class="section-head">
+      <h3><span id="fda-count"></span></h3>
+      <button type="button" class="btn-link" data-csv="fda">Download CSV</button>
+    </div>
+    <div class="table-wrap"><table class="table" id="fda-table"></table></div>
+    <p class="note">FDA posts redacted 483s in batches, often long after the inspection. Full 483 text on Redica is paid, so synopses come from company stock-exchange disclosures and trade press (linked as Source); they report what the company said, not FDA's wording.</p>
+    <h3 class="gap">Regulation and enforcement news</h3>
+    <div class="feed" data-feed="reg"></div>
+  </section>
+
+  <section class="panel" id="flagged" role="tabpanel" hidden>
+    <h2 class="split-heading small">Flagged by<br><span class="grad">the team</span></h2>
+    <p class="sub">Everything a colleague has flagged or commented on, most recent activity first.</p>
+    <div class="feed" id="flagged-feed"></div>
+  </section>
+
+  <section class="block" id="sites">
+    <h2 class="split-heading small">Tracked<br><span class="grad">websites</span></h2>
+    <p class="sub">Sites the weekly refresh checks, on top of its general research. Suggest a new one below and the marketing team will add it.</p>
+    <div class="table-wrap"><table class="table" id="sites-table"></table></div>
+    <div class="thread" id="site-suggestions"></div>
+  </section>
+
+  <details class="block rubric">
+    <summary>How signal is rated</summary>
+    <ul>
+      <li><b>High:</b> acts on a deal or our positioning now. A named direct competitor launches, acquires, raises money or wins a customer in our exact space, or a regulation or enforcement action changes what clients must buy or do.</li>
+      <li><b>Medium:</b> shapes the pitch, but nothing to act on this week. Adjacent competitors or big platforms adding features, and industry trends useful in messaging.</li>
+      <li><b>Low:</b> background context. General pharma AI deals, drug discovery news, market-size reports and rankings of firms we do not compete with head on.</li>
+    </ul>
+    <p>Ratings and "why it matters" notes are written by Claude from public sources. Open the source link before using any figure in client material.</p>
+  </details>
+</main>
+
+<footer class="footer">
+  <div class="wrap">Pivot Path Market &amp; Competitor Watch. Internal use. Life. Science. Possibilities.</div>
+</footer>
+
+<div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
+<script src="assets/app.js"></script>
+</body>
+</html>
