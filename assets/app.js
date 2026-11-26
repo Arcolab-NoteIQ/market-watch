@@ -12,7 +12,7 @@
 
   const state = {
     news: [], fda: [], comp: [], sites: [], run: {}, profiles: [], moves: [],
-    cw: { area: '', comp: '', q: '' },
+    cw: { area: '', comp: '', q: '', pick: '' },
     
     f: { ai: {}, products: {}, services: {}, fda: {} },
     open: new Set()
@@ -229,6 +229,7 @@
       m.signal ? h('span', { class: 'pill sig-' + m.signal }, m.signal) : null);
   }
   function renderCw() {
+    const f = state.cw;
     const ref = new Date((state.run.refreshed || '1970-01-01') + 'T00:00:00Z');
     const within = (d, days) => { if (!d) return false; const t = new Date(d + 'T00:00:00Z'); return t <= ref && (ref - t) / 864e5 <= days; };
     const active = new Set(state.moves.map((m) => m.profile));
@@ -238,22 +239,30 @@
     document.getElementById('cw-k-quiet').textContent = state.profiles.filter((p) => !active.has(p.id)).length;
     const feed = state.moves.filter((m) => m.date && cwMoveOk(m)).slice(0, 25);
     document.getElementById('cw-feed').replaceChildren(...(feed.length ? feed.map((m) => h('article', { class: 'item' }, moveMeta(m, true), h('h4', null, link(m.url, m.headline)), h('div', { class: 'src' }, m.source))) : [h('p', { class: 'empty' }, 'No dated moves match these filters.')]));
-    const cards = cwProfiles();
-    document.getElementById('cw-cards').replaceChildren(...(cards.length ? cards.map((p) => {
-      const mine = state.moves.filter((m) => m.profile === p.id).slice(0, 4);
-      return h('article', { class: 'ccard', id: 'cw-' + p.id },
-        h('h3', null, p.competitor),
-        h('div', { class: 'item-meta' }, p.hq ? h('span', null, p.hq) : null, compAreas(p).map((r) => h('span', { class: 'pill' }, r.area + (r.overlap ? ' · ' + r.overlap : '')))),
-        h('p', { class: 'about' }, p.about || ''),
-        h('div', { class: 'clinks' },
-          safeUrl(p.website) ? link(p.website, 'Website: ' + new URL(p.website).hostname.replace(/^www\./, '')) : h('span', { class: 'muted' }, 'Website not confirmed'),
-          safeUrl(p.linkedin) ? link(p.linkedin, 'LinkedIn') : h('span', { class: 'muted' }, 'LinkedIn page not confirmed')),
-        h('p', { class: 'mhead' }, 'Latest moves'),
-        mine.length ? h('ul', { class: 'mlist' }, mine.map((m) => h('li', null, moveMeta(m, false), link(m.url, m.headline)))) : h('p', { class: 'muted' }, 'No move found yet.'));
-    }) : [h('p', { class: 'empty' }, 'No competitors match these filters.')]));
+    const isKey = (p) => Number(p.key_rank) > 0;
+    const keys = state.profiles.filter(isKey).sort((x, y) => Number(x.key_rank) - Number(y.key_rank));
+    document.getElementById('cw-key').replaceChildren(...(keys.length ? keys.map(card) : [h('p', { class: 'empty' }, 'No key competitors are set.')]));
+    const others = cwProfiles().filter((p) => !isKey(p)).sort((x, y) => x.competitor.localeCompare(y.competitor));
+    if (!others.some((p) => p.id === f.pick)) f.pick = '';
+    document.getElementById('cw-pick').replaceChildren(select('Competitor',
+      [['', others.length ? `Choose a competitor (${others.length})` : 'No competitors match the filters'], ...others.map((p) => [p.id, p.competitor])], f.pick, (v) => { f.pick = v; renderCw(); }));
+    const chosen = others.find((p) => p.id === f.pick);
+    document.getElementById('cw-cards').replaceChildren(chosen ? card(chosen) : h('p', { class: 'empty' }, 'Choose a competitor above to see its profile.'));
+  }
+  function card(p) {
+    const mine = state.moves.filter((m) => m.profile === p.id).slice(0, 4);
+    return h('article', { class: 'ccard', id: 'cw-' + p.id },
+      h('h3', null, p.competitor),
+      h('div', { class: 'item-meta' }, p.hq ? h('span', null, p.hq) : null, compAreas(p).map((r) => h('span', { class: 'pill' }, r.area + (r.overlap ? ' · ' + r.overlap : '')))),
+      h('p', { class: 'about' }, p.about || ''),
+      h('div', { class: 'clinks' },
+        safeUrl(p.website) ? link(p.website, 'Website: ' + new URL(p.website).hostname.replace(/^www\./, '')) : h('span', { class: 'muted' }, 'Website not confirmed'),
+        safeUrl(p.linkedin) ? link(p.linkedin, 'LinkedIn') : h('span', { class: 'muted' }, 'LinkedIn page not confirmed')),
+      h('p', { class: 'mhead' }, 'Latest moves'),
+      mine.length ? h('ul', { class: 'mlist' }, mine.map((m) => h('li', null, moveMeta(m, false), link(m.url, m.headline)))) : h('p', { class: 'muted' }, 'No move found yet.'));
   }
   document.getElementById('cw-csv').addEventListener('click', () => {
-    const rows = cwProfiles().map((p) => {
+    const rows = [...state.profiles].sort((x, y) => (Number(y.key_rank) > 0) - (Number(x.key_rank) > 0) || x.competitor.localeCompare(y.competitor)).map((p) => {
       const m = state.moves.find((x) => x.profile === p.id) || {};
       return { competitor: p.competitor, hq: p.hq, areas: compAreas(p).map((r) => r.area).join('; '), about: p.about, website: p.website, linkedin: p.linkedin, move: m.headline || '', date: m.date || '', url: m.url || '' };
     });
