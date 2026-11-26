@@ -28,6 +28,12 @@
     <p class="meta" id="meta"></p>
   </section>
 
+  <nav class="majorbar" role="tablist" aria-label="Watch">
+    <button type="button" class="mtab" role="tab" data-major="market-watch" aria-selected="true">Market Watch</button>
+    <button type="button" class="mtab" role="tab" data-major="competitor-watch" aria-selected="false" tabindex="-1">Competitor Watch</button>
+  </nav>
+
+  <div class="major" id="market-watch" role="tabpanel">
   <section class="tiles" aria-label="Headline numbers">
     <div class="tile"><p class="tile-label">Items tracked</p><p class="tile-num" id="k-items">&nbsp;</p></div>
     <div class="tile"><p class="tile-label">High-signal items</p><p class="tile-num" id="k-high">&nbsp;</p></div>
@@ -108,6 +114,33 @@
     </ul>
     <p>Ratings and "why it matters" notes are written by Claude from public sources. Open the source link before using any figure in client material.</p>
   </details>
+  </div>
+
+  <div class="major" id="competitor-watch" role="tabpanel" hidden>
+    <section class="tiles" aria-label="Competitor numbers">
+      <div class="tile"><p class="tile-label">Competitors tracked</p><p class="tile-num" id="cw-k-profiles">&nbsp;</p></div>
+      <div class="tile"><p class="tile-label">Moves, last 30 days</p><p class="tile-num" id="cw-k-30">&nbsp;</p></div>
+      <div class="tile"><p class="tile-label">Moves, last 90 days</p><p class="tile-num" id="cw-k-90">&nbsp;</p></div>
+      <div class="tile"><p class="tile-label">No move found yet</p><p class="tile-num" id="cw-k-quiet">&nbsp;</p></div>
+    </section>
+
+    <section class="cw-section">
+      <h2 class="split-heading small">Latest competitor<br><span class="grad">moves</span></h2>
+      <p class="sub">Dated launches, deals, wins and results from every competitor we track, newest first. The filters apply here and to the profiles below.</p>
+      <div class="filters" id="cw-filters"></div>
+      <div class="feed" id="cw-feed"></div>
+    </section>
+
+    <section class="cw-section">
+      <div class="section-head">
+        <h2 class="split-heading small">Competitor<br><span class="grad">profiles</span></h2>
+        <button type="button" class="btn-link" id="cw-csv">Download CSV</button>
+      </div>
+      <p class="sub">One card per competitor: where they are based, which of our products and services they compete with, their website and LinkedIn page, and their latest moves. Most recently active first.</p>
+      <div class="cgrid" id="cw-cards"></div>
+      <p class="note">Moves combine each competitor's latest move from the watchlist with news items about them. Where a LinkedIn page could not be confirmed, none is linked rather than guessing.</p>
+    </section>
+  </div>
 </main>
 
 <footer class="footer">

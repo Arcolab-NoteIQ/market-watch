@@ -11,7 +11,8 @@
   const TABS = ['ai', 'products', 'services', 'fda483'];
 
   const state = {
-    news: [], fda: [], comp: [], sites: [], run: {},
+    news: [], fda: [], comp: [], sites: [], run: {}, profiles: [], moves: [],
+    cw: { area: '', comp: '', q: '' },
     
     f: { ai: {}, products: {}, services: {}, fda: {} },
     open: new Set()
@@ -62,11 +63,13 @@
     return r.json();
   }
   async function loadData() {
-    const [news, fda, comp, run, sites] = await Promise.all([
+    const [news, fda, comp, run, sites, profiles] = await Promise.all([
       getJSON('data/news.json'), getJSON('data/fda.json'), getJSON('data/competitors.json'),
-      getJSON('data/run.json').catch(() => [{}]), getJSON('data/sites.json').catch(() => [])
+      getJSON('data/run.json').catch(() => [{}]), getJSON('data/sites.json').catch(() => []),
+      getJSON('data/profiles.json').catch(() => [])
     ]);
-    state.news = news; state.fda = fda; state.comp = comp; state.run = run[0] || {}; state.sites = sites;
+    state.news = news; state.fda = fda; state.comp = comp; state.run = run[0] || {}; state.sites = sites; state.profiles = profiles;
+    state.moves = buildMoves(profiles, comp, news);
   }
 
   /* ---------- filters ---------- */
@@ -76,7 +79,7 @@
     return h('label', null, label, s);
   }
   function renderFilters() {
-    document.querySelectorAll('.filters').forEach((box) => {
+    document.querySelectorAll('.filters[data-scope]').forEach((box) => {
       const sc = box.dataset.scope; const f = state.f[sc];
       const kids = [];
       if (sc === 'fda') {
@@ -180,6 +183,83 @@
     t.replaceChildren(head, body);
   }
 
+  /* ---------- competitor watch ---------- */
+  const AREAS = [...SCOPES.products, ...SCOPES.services];
+  function buildMoves(profiles, competitors, news) {
+    const esc = (x) => String(x).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const hits = (co, aliases) => (aliases || []).some((a) => new RegExp('(^|[^A-Za-z])' + esc(a) + '([^A-Za-z]|$)', 'i').test(co));
+    const out = []; const seen = new Set();
+    news.forEach((n) => profiles.forEach((p) => {
+      if (!hits(String(n.company || ''), p.aliases)) return;
+      const k = p.id + '|' + (n.url || n.headline); if (seen.has(k)) return; seen.add(k);
+      out.push({ profile: p.id, competitor: p.competitor, date: n.date || '', area: n.area, headline: n.headline, url: n.url || '', source: n.source || '', signal: n.signal || '' });
+    }));
+    const byName = new Map(); profiles.forEach((p) => (p.names || []).forEach((nm) => byName.set(nm, p)));
+    competitors.forEach((c) => {
+      const p = byName.get(c.competitor);
+      if (!p || !c.latest_move || /^No .*found yet$/.test(c.latest_move)) return;
+      const k = p.id + '|' + (c.url || c.latest_move); if (seen.has(k)) return; seen.add(k);
+      if (c.move_date && out.some((m) => m.profile === p.id && m.date === c.move_date)) return;
+      out.push({ profile: p.id, competitor: p.competitor, date: c.move_date || '', area: c.area, headline: c.latest_move, url: c.url || '', source: 'Watchlist', signal: '' });
+    });
+    return out.sort((a, b) => (b.date || '').localeCompare(a.date || '') || a.competitor.localeCompare(b.competitor));
+  }
+  const compAreas = (p) => state.comp.filter((r) => (p.names || []).includes(r.competitor)).sort((a, b) => AREAS.indexOf(a.area) - AREAS.indexOf(b.area));
+  function cwMoveOk(m) {
+    const f = state.cw;
+    return (!f.comp || m.profile === f.comp) && (!f.area || m.area === f.area) && (!f.q || (m.competitor + ' ' + m.headline).toLowerCase().includes(f.q));
+  }
+  function cwProfiles() {
+    const f = state.cw;
+    const latest = (id) => (state.moves.find((m) => m.profile === id && m.date) || {}).date || '';
+    return state.profiles.filter((p) => (!f.comp || p.id === f.comp) && (!f.area || compAreas(p).some((r) => r.area === f.area)) && (!f.q || (p.competitor + ' ' + (p.about || '') + ' ' + (p.hq || '')).toLowerCase().includes(f.q)))
+      .sort((a, b) => latest(b.id).localeCompare(latest(a.id)) || a.competitor.localeCompare(b.competitor));
+  }
+  function renderCwFilters() {
+    const f = state.cw;
+    const comps = [...state.profiles].sort((a, b) => a.competitor.localeCompare(b.competitor));
+    document.getElementById('cw-filters').replaceChildren(
+      select('Our product or service', [['', 'All products and services'], ...AREAS.map((a) => [a, a])], f.area, (v) => { f.area = v; renderCw(); }),
+      select('Competitor', [['', 'All competitors'], ...comps.map((p) => [p.id, p.competitor])], f.comp, (v) => { f.comp = v; renderCw(); }),
+      h('label', null, 'Search', h('input', { type: 'search', placeholder: 'Name or keyword', 'aria-label': 'Search', value: f.q, oninput: (e) => { f.q = e.target.value.trim().toLowerCase(); renderCw(); } })));
+  }
+  function moveMeta(m, withName) {
+    return h('div', { class: 'item-meta' }, h('span', { class: 'nowrap' }, m.date ? fmtDate(m.date) : 'Date not given'),
+      withName ? h('span', { class: 'pill' }, m.competitor) : null, h('span', { class: 'pill' }, m.area),
+      m.signal ? h('span', { class: 'pill sig-' + m.signal }, m.signal) : null);
+  }
+  function renderCw() {
+    const ref = new Date((state.run.refreshed || '1970-01-01') + 'T00:00:00Z');
+    const within = (d, days) => { if (!d) return false; const t = new Date(d + 'T00:00:00Z'); return t <= ref && (ref - t) / 864e5 <= days; };
+    const active = new Set(state.moves.map((m) => m.profile));
+    document.getElementById('cw-k-profiles').textContent = state.profiles.length;
+    document.getElementById('cw-k-30').textContent = state.moves.filter((m) => within(m.date, 30)).length;
+    document.getElementById('cw-k-90').textContent = state.moves.filter((m) => within(m.date, 90)).length;
+    document.getElementById('cw-k-quiet').textContent = state.profiles.filter((p) => !active.has(p.id)).length;
+    const feed = state.moves.filter((m) => m.date && cwMoveOk(m)).slice(0, 25);
+    document.getElementById('cw-feed').replaceChildren(...(feed.length ? feed.map((m) => h('article', { class: 'item' }, moveMeta(m, true), h('h4', null, link(m.url, m.headline)), h('div', { class: 'src' }, m.source))) : [h('p', { class: 'empty' }, 'No dated moves match these filters.')]));
+    const cards = cwProfiles();
+    document.getElementById('cw-cards').replaceChildren(...(cards.length ? cards.map((p) => {
+      const mine = state.moves.filter((m) => m.profile === p.id).slice(0, 4);
+      return h('article', { class: 'ccard', id: 'cw-' + p.id },
+        h('h3', null, p.competitor),
+        h('div', { class: 'item-meta' }, p.hq ? h('span', null, p.hq) : null, compAreas(p).map((r) => h('span', { class: 'pill' }, r.area + (r.overlap ? ' · ' + r.overlap : '')))),
+        h('p', { class: 'about' }, p.about || ''),
+        h('div', { class: 'clinks' },
+          safeUrl(p.website) ? link(p.website, 'Website: ' + new URL(p.website).hostname.replace(/^www\./, '')) : h('span', { class: 'muted' }, 'Website not confirmed'),
+          safeUrl(p.linkedin) ? link(p.linkedin, 'LinkedIn') : h('span', { class: 'muted' }, 'LinkedIn page not confirmed')),
+        h('p', { class: 'mhead' }, 'Latest moves'),
+        mine.length ? h('ul', { class: 'mlist' }, mine.map((m) => h('li', null, moveMeta(m, false), link(m.url, m.headline)))) : h('p', { class: 'muted' }, 'No move found yet.'));
+    }) : [h('p', { class: 'empty' }, 'No competitors match these filters.')]));
+  }
+  document.getElementById('cw-csv').addEventListener('click', () => {
+    const rows = cwProfiles().map((p) => {
+      const m = state.moves.find((x) => x.profile === p.id) || {};
+      return { competitor: p.competitor, hq: p.hq, areas: compAreas(p).map((r) => r.area).join('; '), about: p.about, website: p.website, linkedin: p.linkedin, move: m.headline || '', date: m.date || '', url: m.url || '' };
+    });
+    download(`pivotpath-competitor-profiles-${stamp()}.csv`, csv(rows, [['Competitor', 'competitor'], ['Headquarters', 'hq'], ['Competes with', 'areas'], ['About', 'about'], ['Website', 'website'], ['LinkedIn', 'linkedin'], ['Latest move', 'move'], ['Date', 'date'], ['Move URL', 'url']]));
+  });
+
   /* ---------- sites ---------- */
   function renderSites() {
     const t = document.getElementById('sites-table');
@@ -225,6 +305,26 @@
     else { const sc = k.split('-')[1]; download(`pivotpath-competitors-${sc}-${stamp()}.csv`, csv(compRows(sc), [['Area', 'area'], ['Group', 'group'], ['Competitor', 'competitor'], ['Offering', 'offering'], ['Latest move', 'latest_move'], ['Date', 'move_date'], ['Overlap', 'overlap'], ['URL', 'url']])); }
   });
 
+  /* ---------- major tabs ---------- */
+  const MAJORS = ['market-watch', 'competitor-watch'];
+  let major = location.hash.slice(1) === 'competitor-watch' ? 'competitor-watch' : 'market-watch';
+  function showMajor(id, push) {
+    major = id;
+    document.querySelectorAll('.major').forEach((p) => { p.hidden = p.id !== id; });
+    document.querySelectorAll('.mtab').forEach((b) => { const on = b.dataset.major === id; b.setAttribute('aria-selected', on ? 'true' : 'false'); b.tabIndex = on ? 0 : -1; });
+    if (push) history.replaceState(null, '', '#' + (id === 'market-watch' ? current : id));
+  }
+  document.querySelectorAll('.mtab').forEach((b) => {
+    b.addEventListener('click', () => showMajor(b.dataset.major, true));
+    b.addEventListener('keydown', (e) => {
+      if (e.key !== 'ArrowRight' && e.key !== 'ArrowLeft') return;
+      e.preventDefault();
+      const n = MAJORS[(MAJORS.indexOf(b.dataset.major) + 1) % MAJORS.length];
+      showMajor(n, true);
+      document.querySelector(`.mtab[data-major="${n}"]`).focus();
+    });
+  });
+
   /* ---------- tabs ---------- */
   let current = TABS.includes(location.hash.slice(1)) ? location.hash.slice(1) : 'ai';
   function showTab(id, push) {
@@ -244,7 +344,7 @@
       document.querySelector(`.tab[data-tab="${n}"]`).focus();
     });
   });
-  window.addEventListener('hashchange', () => { const id = location.hash.slice(1); if (TABS.includes(id)) showTab(id, false); });
+  window.addEventListener('hashchange', () => { const id = location.hash.slice(1); if (TABS.includes(id)) { showMajor('market-watch', false); showTab(id, false); } else if (MAJORS.includes(id)) showMajor(id, false); });
   document.getElementById('print-btn').addEventListener('click', () => window.print());
 
   /* ---------- render ---------- */
@@ -253,12 +353,12 @@
     renderHeader(); renderFilters();
     ['ai', 'products', 'services', 'reg'].forEach(renderFeed);
     ['products', 'services'].forEach((sc) => { renderBars(sc); renderComp(sc); });
-    renderFda(); renderSites();
+    renderFda(); renderSites(); renderCwFilters(); renderCw();
     document.getElementById('k-wl').textContent = String(state.fda.filter((r) => r.doc_type === 'Warning letter').length);
   }
 
   (async () => {
-    showTab(current, false);
+    showTab(current, false); showMajor(major, false);
     try {
       await loadData();
       renderAll();

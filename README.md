@@ -6,7 +6,7 @@ A read-only web dashboard for the Pivot Path team covering industry trends, comp
 
 | Path | What it is |
 | --- | --- |
-| `index.html` | The page: AI, Products, Services and 483s tabs, tracked websites, signal rubric |
+| `index.html` | The page: Market Watch (AI, Products, Services and 483s tabs, tracked websites, signal rubric) and Competitor Watch (latest moves and one profile per competitor with website and LinkedIn links) |
 | `assets/` | Styles, script and the Pivot Path logo |
 | `data/*.json` | The data, updated every weekday by Claude's refresh |
 | `.nojekyll` | Tells GitHub Pages to serve the files as they are |
