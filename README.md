@@ -36,3 +36,17 @@ Each run commits fresh `data/*.json` files to `main`, and GitHub Pages republish
 
 - The repo is public, so the data files can be seen by anyone who finds them. Search engines are asked not to index the page.
 - To suggest a website for the daily checks, contact the marketing team.
+
+## Email digest (Monday and Thursday)
+
+`.github/workflows/email-digest.yml` runs `scripts/email_digest.py` at 8:30 am IST every Monday and Thursday. It emails everything new since the previous digest (high-signal items first, then product, service and AI news, new 483s and warning letters with Indian sites first, and competitor moves). If nothing is new, it sends a short note with last week's highlights instead. What has been sent is tracked in `email/state.json`.
+
+Repository secrets (Settings, then Secrets and variables, then Actions):
+
+| Secret | Value |
+| --- | --- |
+| `GMAIL_USER` | The sending Gmail address |
+| `GMAIL_APP_PASSWORD` | A Gmail app password for that account (needs 2-Step Verification on the account) |
+| `MAIL_TO` | Recipients, comma-separated. They are sent as Bcc, so recipients don't see each other. |
+
+To test, open **Actions, then Email digest, then Run workflow**. Leave "Mark these items as sent" unticked so the test doesn't affect the next scheduled email.

@@ -1,2 +1,5 @@
 node_modules/
 .netlify/
+email/preview.html
+email/preview.txt
+__pycache__/
